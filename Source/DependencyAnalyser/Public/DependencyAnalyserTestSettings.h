@@ -4,6 +4,7 @@
 
 #include "UObject/ObjectMacros.h"
 #include "UObject/Object.h"
+#include "Engine/Blueprint.h"
 #include "DependencyAnalyserTestSettings.generated.h"
 
 USTRUCT()
@@ -29,6 +30,11 @@ class DEPENDENCYANALYSER_API UDependencyAnalyserTestSettings : public UObject
 	GENERATED_BODY()
 
 public:
+	// A list of asset types to analyse - leave empty to analyse all assets (might be slow!)
+	UPROPERTY(EditAnywhere, config, Category="Settings")
+	TArray<UClass*> OnlyAnalyseAssetTypes = { UBlueprint::StaticClass() };
+	
+	// Whether to include memory size calculation
 	UPROPERTY(EditAnywhere, config, Category="Settings")
 	bool bEnableMemorySizeCalculation = false;
 	

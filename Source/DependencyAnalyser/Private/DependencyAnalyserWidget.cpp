@@ -279,7 +279,8 @@ void SDependencyAnalyserWidget::Construct(const FArguments& InArgs)
 FReply SDependencyAnalyserWidget::OnRun()
 {
 	const FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
-	TArray<FAssetData> Results = UDependencyFunctionLibrary::RunAssetAudit(AssetRegistryModule);
+	TArray<FAssetData> Results;
+	UDependencyFunctionLibrary::RunAssetAudit(AssetRegistryModule, Results);
 	UDependencyFunctionLibrary::CachedDefaultWarningSize = FCString::Atoi(*WarningSize.Get()->GetText().ToString());
 	UDependencyFunctionLibrary::CachedDefaultErrorSize = FCString::Atoi(*ErrorSize.Get()->GetText().ToString());
 
@@ -309,6 +310,10 @@ FReply SDependencyAnalyserWidget::OnRun()
 		{
 			continue;
 		}
+		if (!UDependencyFunctionLibrary::CachedOnlyAnalyseAssetTypes.IsEmpty() && !UDependencyFunctionLibrary::CachedOnlyAnalyseAssetTypes.Contains(Results[i].GetClass()))
+		{
+			continue;
+		}
 
 		if (Results[i].AssetName.ToString().Contains("L_Expanse"))
 		{
@@ -322,7 +327,8 @@ FReply SDependencyAnalyserWidget::OnRun()
 			IncludeSoftRef->IsChecked(),
 			IgnoreDevFolders->IsChecked());
 		UClass* AssetClass = Result.GetClass();
-		FLineData Data = {Result.AssetName.ToString(), Dependencies.Amount, Dependencies.DiskSize, Dependencies.MemorySize, Result.GetAsset(), AssetClass, AssetClass->GetFName(), Result.PackageName};
+		FName AssetType = AssetClass ? AssetClass->GetFName() : FName("None");
+		FLineData Data = {Result.AssetName.ToString(), Dependencies.Amount, Dependencies.DiskSize, Dependencies.MemorySize, Result.GetAsset(), AssetClass, AssetType, Result.PackageName};
 
 		if (const UBlueprint* InBlueprint = Cast<UBlueprint>(Data.Object))
 		{
@@ -370,11 +376,12 @@ FReply SDependencyAnalyserWidget::OnExport()
 	TArray<FString> Lines;
 	for (auto Line : LinesData)
 	{
-		FString Data = FString::Printf(TEXT("%s, %d, %d, %s, %s,"),
+		FString Type = Line.Get()->Class ? Line.Get()->Class->GetName() : FString("None");
+		FString Data = FString::Printf(TEXT("%s, %d, %s, %s, %s,"),
 			ToCStr(Line.Get()->Name),
 			Line.Get()->DependenciesCount,
-			static_cast<int32>(Line.Get()->DiskSize),
-			ToCStr(Line.Get()->Class->GetName()),
+			ToCStr(UDependencyFunctionLibrary::GetSizeText(Line.Get()->DiskSize).ToString()),
+			ToCStr(Type),
 			ToCStr(Line.Get()->Path.ToString()));
 		Lines.Add(Data);
 	}
@@ -457,7 +464,7 @@ bool SDependencyAnalyserWidget::DoesPassFilter(const TSharedPtr<FLineData, ESPMo
 		return true;
 	}
 
-	if (LineData.Get()->Class->GetName().Contains(Filter.ToString()))
+	if (LineData.Get()->Class != nullptr && LineData.Get()->Class->GetName().Contains(Filter.ToString()))
 	{
 		return true;
 	}
@@ -514,6 +521,11 @@ void SDependencyAnalyserWidget::OnSortColumnHeader(const EColumnSortPriority::Ty
 	{
 		auto ReferenceCountSorter = [](const TSharedPtr<FLineData>& A, const TSharedPtr<FLineData>& B)
 		{
+			if (B.Get()->Class == nullptr || A.Get()->Class == nullptr)
+			{
+				return false;
+			}
+
 			return B.Get()->Class->GetName() > A.Get()->Class->GetName();
 		};
 		LinesData.Sort(ReferenceCountSorter);

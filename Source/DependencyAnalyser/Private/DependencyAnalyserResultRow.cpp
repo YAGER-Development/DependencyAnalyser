@@ -34,11 +34,11 @@ TSharedRef<SWidget> SDependencyAnalyserResultRow::GenerateWidgetForColumn(const 
 	}
 	else if (InColumnName == SDependencyAnalyserWidget::Name_DiskSize)
 	{
-		ColumnText = GetSizeText(Item->DiskSize);
+		ColumnText = UDependencyFunctionLibrary::GetSizeText(Item->DiskSize);
 	}
 	else if (UDependencyFunctionLibrary::bEnableMemorySizeCalculation && InColumnName == SDependencyAnalyserWidget::Name_MemorySize)
 	{
-		ColumnText = GetSizeText(Item->MemorySize);	
+		ColumnText = UDependencyFunctionLibrary::GetSizeText(Item->MemorySize);
 	}
 	else if (InColumnName == SDependencyAnalyserWidget::Name_Type)
 	{
@@ -143,21 +143,4 @@ void SDependencyAnalyserResultRow::BrowseAsset() const
 	const TArray<FAssetData>& Assets = {SelectedAsset};
 	const FContentBrowserModule& ContentBrowserModule = FModuleManager::Get().LoadModuleChecked<FContentBrowserModule>("ContentBrowser");
 	ContentBrowserModule.Get().SyncBrowserToAssets(Assets);
-}
-
-FText SDependencyAnalyserResultRow::GetSizeText(const SIZE_T SizeInBytes) const
-{
-	if (SizeInBytes < 1000)
-	{
-		return FText::AsMemory(SizeInBytes, SI);
-	}
-	else
-	{
-		FNumberFormattingOptions NumberFormattingOptions;
-		NumberFormattingOptions.MaximumFractionalDigits = 3;
-		NumberFormattingOptions.MinimumFractionalDigits = 0;
-		NumberFormattingOptions.MinimumIntegralDigits = 1;
-
-		return FText::AsMemory(SizeInBytes, &NumberFormattingOptions, nullptr, SI);
-	}
 }

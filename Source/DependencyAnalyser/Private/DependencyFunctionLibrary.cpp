@@ -6,15 +6,11 @@
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Misc/ConfigCacheIni.h"
 
-
-TArray<FAssetData> UDependencyFunctionLibrary::RunAssetAudit(const FAssetRegistryModule& AssetRegistryModule)
+void UDependencyFunctionLibrary::RunAssetAudit(const FAssetRegistryModule& AssetRegistryModule, TArray<FAssetData>& AssetData)
 {
 	CacheConfig();
 	
-	TArray<FAssetData> AssetData;
 	AssetRegistryModule.Get().GetAssetsByPath("/Game", AssetData, true);
-
-	return AssetData;
 }
 
 FDependenciesData UDependencyFunctionLibrary::GetDependencies(const FAssetRegistryModule& AssetRegistryModule,
@@ -29,13 +25,14 @@ FDependenciesData UDependencyFunctionLibrary::GetDependencies(const FAssetRegist
 	{
 		GetDependenciesRecursive(AssetRegistryModule, AssetData.PackageName, UE::AssetRegistry::EDependencyQuery::Soft, IgnoreDevFolders, Dependencies);
 	}
-	
+
 	for (const FName& Dependency : Dependencies)
 	{
-		const TOptional<FAssetPackageData> PackageData = AssetRegistryModule.Get().GetAssetPackageDataCopy(Dependency);
+		FAssetPackageData OutAssetPackageData;
+		AssetRegistryModule.Get().TryGetAssetPackageData(Dependency, OutAssetPackageData);
 
 		Data.Amount++;
-		Data.DiskSize += PackageData->DiskSize;
+		Data.DiskSize += OutAssetPackageData.DiskSize;
 
 		if (UDependencyFunctionLibrary::bEnableMemorySizeCalculation)
 		{
@@ -79,7 +76,10 @@ void UDependencyFunctionLibrary::CacheConfig()
 
 	GConfig->GetString(TEXT("/Script/DependencyAnalyser.DependencyAnalyserTestSettings"), TEXT("WarningLimitsPerAssetType"), SingleStringFromConfig, GEngineIni);
 	SingleStringFromConfig.ParseIntoArray(ExtensionTypes, TEXT("),("));
-	
+	CachedWarningDiskSizePerType.Empty();
+	CachedWarningMemorySizePerType.Empty();
+	CachedWarningCountPerType.Empty();
+
 	for (const FString& Type : ExtensionTypes)
 	{
 		FString ClassStr, DepStr, PackageStr, NameStr, DiskSizeStr, MemorySizeStr, CountStr;
@@ -105,6 +105,9 @@ void UDependencyFunctionLibrary::CacheConfig()
 
 	GConfig->GetString(TEXT("/Script/DependencyAnalyser.DependencyAnalyserTestSettings"), TEXT("ErrorLimitsPerAssetType"), SingleStringFromConfig, GEngineIni);
 	SingleStringFromConfig.ParseIntoArray(ExtensionTypes, TEXT("),("));
+	CachedErrorDiskSizePerType.Empty();
+	CachedErrorMemorySizePerType.Empty();
+	CachedErrorCountPerType.Empty();
 	
 	for (const FString& Type : ExtensionTypes)
 	{
@@ -126,6 +129,18 @@ void UDependencyFunctionLibrary::CacheConfig()
 			CachedErrorMemorySizePerType.Add(ParsedClass, ParsedMemorySize);
 			int32 ParsedCount = FCString::Atoi(*CountStr);
 			CachedErrorCountPerType.Add(ParsedClass, ParsedCount);
+		}
+	}
+
+	GConfig->GetString(TEXT("/Script/DependencyAnalyser.DependencyAnalyserTestSettings"), TEXT("OnlyAnalyseAssetTypes"), SingleStringFromConfig, GEngineIni);
+	SingleStringFromConfig.ParseIntoArray(ExtensionTypes, TEXT("),("));
+	CachedOnlyAnalyseAssetTypes.Empty();
+
+	for (const FString& Type : ExtensionTypes)
+	{
+		if (UClass* ParsedClass = FindObject<UClass>(nullptr, *Type))
+		{
+			CachedOnlyAnalyseAssetTypes.Add(ParsedClass);
 		}
 	}
 }
@@ -197,11 +212,10 @@ bool UDependencyFunctionLibrary::IsErrorCount(const UClass* Class, const int32 C
 }
 
 void UDependencyFunctionLibrary::GetDependenciesRecursive(const FAssetRegistryModule& AssetRegistryModule,
-                                                          const FName PackageName, const UE::AssetRegistry::EDependencyQuery QueryType, const bool IgnoreDevFolders, TArray<FName>& OutDependencies)
+                                                          const FName& PackageName, const UE::AssetRegistry::EDependencyQuery QueryType, const bool IgnoreDevFolders, TArray<FName>& OutDependencies)
 {
 	TArray<FName> Subdependencies;
-	AssetRegistryModule.Get().GetDependencies(PackageName, Subdependencies,
-		UE::AssetRegistry::EDependencyCategory::All, QueryType);
+	AssetRegistryModule.Get().GetDependencies(PackageName, Subdependencies, UE::AssetRegistry::EDependencyCategory::Package, QueryType);
 	
 	for (const FName& Subdependency : Subdependencies)
 	{
@@ -215,14 +229,15 @@ void UDependencyFunctionLibrary::GetDependenciesRecursive(const FAssetRegistryMo
 			continue;
 		}
 
-		if (!AssetRegistryModule.Get().GetAssetPackageDataCopy(Subdependency))
+		FAssetPackageData OutAssetPackageData;
+		if (AssetRegistryModule.Get().TryGetAssetPackageData(Subdependency, OutAssetPackageData) != UE::AssetRegistry::EExists::Exists)
 		{
 			continue;
 		}
 
 		OutDependencies.Add(FName(Subdependency));
 
-		GetDependenciesRecursive(AssetRegistryModule, OutDependencies.Last(), QueryType, IgnoreDevFolders, OutDependencies);
+		GetDependenciesRecursive(AssetRegistryModule, Subdependency, QueryType, IgnoreDevFolders, OutDependencies);
 	}
 }
 
@@ -230,4 +245,21 @@ bool UDependencyFunctionLibrary::IsOverMBSize(const SIZE_T Size, const int32 Siz
 {
 	const int32 TotalMB = SizeMB * 1000000;
 	return Size > TotalMB;
+}
+
+FText UDependencyFunctionLibrary::GetSizeText(const SIZE_T SizeInBytes)
+{
+	if (SizeInBytes < 1000)
+	{
+		return FText::AsMemory(SizeInBytes, SI);
+	}
+	else
+	{
+		FNumberFormattingOptions NumberFormattingOptions;
+		NumberFormattingOptions.MaximumFractionalDigits = 3;
+		NumberFormattingOptions.MinimumFractionalDigits = 0;
+		NumberFormattingOptions.MinimumIntegralDigits = 1;
+
+		return FText::AsMemory(SizeInBytes, &NumberFormattingOptions, nullptr, SI);
+	}
 }

@@ -30,7 +30,6 @@ private:
 	void OpenSizeMap() const;
 	void EditAsset() const;
 	void BrowseAsset() const;
-	FText GetSizeText(const SIZE_T SizeInBytes) const;
 	
 	TSharedPtr<FLineData> Item;
 	bool bIsWarningSize = false;

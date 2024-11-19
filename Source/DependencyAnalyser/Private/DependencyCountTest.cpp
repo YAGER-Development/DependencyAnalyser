@@ -13,7 +13,8 @@ void FDependencyCountTest::GetTests(TArray<FString>& OutBeautifiedNames, TArray<
 	UDependencyFunctionLibrary::CacheConfig();
 	
 	const FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
-	TArray<FAssetData> Results = UDependencyFunctionLibrary::RunAssetAudit(AssetRegistryModule);
+	TArray<FAssetData> Results;
+	UDependencyFunctionLibrary::RunAssetAudit(AssetRegistryModule, Results);
 	for (int32 i = 0; i < Results.Num(); i++)
 	{
 		const FString& Filename = Results[i].PackageName.ToString();

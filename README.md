@@ -4,7 +4,7 @@ The Dependency Analyser is a UE5 plugin to measure and analyse bottlenecks in [a
 ![dependency_analyser](https://github.com/YAGER-Development/DependencyAnalyser/assets/17513294/c799d3d2-dbc4-4a32-8d90-6175635345da)
 
 ## Table of Contents
-- [Introduction](#introduction-to-the-dependency-analyser)
+- [Introduction](#introduction)
   - [The dependency problem](#the-dependency-problem)
   - [Specifications](#specifications)
   - [Usage instructions](#usage-instructions)
@@ -37,6 +37,7 @@ To use the Dependency Analyser plugin:
 * Compile your C++ project (this repository does not contain binaries - users will need to compile the plugin autonomously) and open Unreal
 * Navigate to `Tools > Miscellaneous > Dependency Analyser` to bring up the Dependency Analyser Tool
 * Navigate to `Tools > Test Automation` and select `DependencyAnalyser` to inspect and run the Dependency Analyser Test Suite
+* Navigate to `Edit > Editor Preferences > Dependency Analyser` to customise the settings, such as which asset types are included in the analysis
 
 ## Plugin Components
 The Dependency Analyser plugin comprises of two main features:
@@ -55,6 +56,8 @@ The Dependency Analyser Tool comprises of the following features:
    * Double-clicking bring up the Size Map inspector
 5. Searchable results by Name or Type
 6. Sortable results by Name, Dependencies Count, Total Size, Type or Path
+
+By default, the tool only analyses assets of type World. Removing limitations to asset types will allow the tool to analyse all assets (which is potentially slow for large projects).
 
 ![tool_breakdown](https://github.com/YAGER-Development/DependencyAnalyser/assets/17513294/9878555a-1d8c-406d-aa03-3e4b4bf9c598)
 
@@ -80,7 +83,7 @@ where [TestName] is either DependencyCountTest or DependencySizeTest. The result
 
 ### Dependency Analyser Settings
 
-Users can customise error and warning sizes (both defaults and per asset type), and whether warnings should fail a test or not. These values can be customised by navigating to `Edit > Editor Preferences > Advanced > Dependency Analyser` and modifying the default values (or `Type Limits` for a higher degree of control), and `Fail for Warnings`.
+Users can customise which asset types to analyse, whether to enable memory size calculation, error and warning sizes (both defaults and per asset type), and whether warnings should fail a test or not. These values can be customised by navigating to `Edit > Editor Preferences > Advanced > Dependency Analyser` and modifying the default values (or `Type Limits` for a higher degree of control), and `Fail for Warnings`.
 
 ![settings](https://github.com/YAGER-Development/DependencyAnalyser/assets/17513294/50443211-0899-42a7-b971-05a20eb79cd5)
 
