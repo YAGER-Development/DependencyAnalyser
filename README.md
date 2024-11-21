@@ -7,7 +7,7 @@ The Dependency Analyser is a UE5 plugin to measure and analyse bottlenecks in [a
 - [Introduction](#introduction-to-the-dependency-analyser)
   - [The dependency problem](#the-dependency-problem)
   - [Specifications](#specifications)
-  - [Usage instructions](#usage-instructions)
+  - [Installation](#installation)
 - [Plugin Components](#plugin-components)
   - [Dependency Analyser Tool](#dependency-analyser-tool)
   - [Dependency Analyser Test Suite](#dependency-analyser-test-suite)
@@ -24,7 +24,7 @@ This plugin simplifies the identification of asset dependencies by pointing a sp
 ### Specifications
 Dependency Analyser plugin version 1.0. Compatibility tested with Unreal Engine version 5.3.2 and 5.1.1.
 
-### Usage instructions
+### Installation
 To use the Dependency Analyser plugin:
 * Download this repository
 * Move it to
@@ -35,10 +35,8 @@ To use the Dependency Analyser plugin:
     * `/Users/Shared/Epic Games/UE_[version]/Engine/Plugins` on macOS
 * Enable it by following the [Unreal Engine guidelines](https://docs.unrealengine.com/5.0/en-US/working-with-plugins-in-unreal-engine/)
 * Compile your C++ project (this repository does not contain binaries - users will need to compile the plugin autonomously) and open Unreal
-* Navigate to `Tools > Miscellaneous > Dependency Analyser` to bring up the Dependency Analyser Tool
-* Navigate to `Tools > Test Automation` and select `DependencyAnalyser` to inspect and run the Dependency Analyser Test Suite
 
-## Plugin Components
+## Features
 The Dependency Analyser plugin comprises of two main features:
 * The [Dependency Analyser Tool](#dependency-analyser-tool), which allows for an overview of the project asset dependencies
 * The [Dependency Analyser Test Suite](#dependency-analyser-test-suite), which uses the Automation System framework to include acceptance limits to asset dependency sizes
@@ -46,6 +44,8 @@ The Dependency Analyser plugin comprises of two main features:
 The settings of each of these tools can be customised via the [Dependency Analyser Settings](#dependency-analyser-settings).
 
 ### Dependency Analyser Tool
+Navigate to `Tools > Miscellaneous > Dependency Analyser` to bring up the Dependency Analyser Tool.
+
 The Dependency Analyser Tool comprises of the following features:
 1. Optional inclusion of soft references and dev folders into the results
 2. Customisation of size in MB at which assets should be considered a warning (orange) or an error (red). These are reset every time the tool is reopened - to set them as default values, see [Dependency Analyser Settings](#dependency-analyser-settings)
@@ -53,13 +53,15 @@ The Dependency Analyser Tool comprises of the following features:
 4. Individual inspection of resulting assets
    * Right-clicking brings up a context menu including the options `Open Size Map`, `Edit Asset` or `Find in Content Browser`
    * Double-clicking bring up the Size Map inspector
-5. Searchable results by Name or Type
+5. Searchable results by Name or Type (e.g. "StaticMesh" or "GameMode")
 6. Sortable results by Name, Dependencies Count, Total Size, Type or Path
 
 ![tool_breakdown](https://github.com/YAGER-Development/DependencyAnalyser/assets/17513294/9878555a-1d8c-406d-aa03-3e4b4bf9c598)
 
 ### Dependency Analyser Test Suite
 If the project has the [Functional Testing Editor plugin enabled](https://docs.unrealengine.com/5.3/en-US/automation-system-in-unreal-engine/#automationtestsmovedtoplugins), the Dependency Analyser offers a test suite to run a dependency analysis on all assets. The test is executed per-asset, so individual sizes of asset for each failing test can be identified.
+
+Navigate to `Tools > Test Automation` and select `DependencyAnalyser` to inspect and run the Dependency Analyser Test Suite.
 
 ![test_tool](https://github.com/YAGER-Development/DependencyAnalyser/assets/17513294/4311e056-ea7f-42db-a314-266b71c273e8)
 
