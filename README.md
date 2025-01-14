@@ -86,5 +86,9 @@ Users can customise error and warning sizes (both defaults and per asset type), 
 
 ## Contributions
 All rights to this plugin belong to YAGER. To contribute to the development of this plugin, feel free to open a [Pull Request](https://github.com/YAGER-Development/DependencyAnalyser/pulls). If you want to actively be part of what we are developing at YAGER, check out and apply to any relevant open positions on our [YAGER website](https://www.yager.de/).
+
+## Official Maintainers
+[@ivasyliev](https://github.com/ivasyliev)
+
 ### Known issues
 _No known issues at the moment. If you find an issue, feel free to add it to the [Issues](https://github.com/YAGER-Development/DependencyAnalyser/issues) page of this repository._
